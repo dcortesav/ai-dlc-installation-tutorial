@@ -1,9 +1,9 @@
 # AI-DLC Tool — Complete Installation Guide
 
-> **Target environment:** WSL2 (Windows Subsystem for Linux, Ubuntu) with systemd support.
+> **Target environment:** WSL2 (Ubuntu-26.04) with systemd support.
 > **Tool version:** 0.23.1 | **Gateway:** jiuwenswarm 0.2.3 | **Spec validator:** openspec 1.10.0
-> **MaaS API endpoint:** `https://api-ap-southeast-1.modelarts-maas.com/openai/v1` (Huawei Cloud ModelArts, Singapore region)
-> **Gateway port:** 19001 (hardcoded default)
+> **MaaS API endpoint:** `https://api-ap-southeast-1.modelarts-maas.com/openai/v1`
+> **Gateway port:** 19001
 
 ---
 
@@ -23,8 +23,8 @@ The `./install.sh --bootstrap` command handles phase 1 but **does not** complete
 Before starting, you will need:
 
 - A WSL2 Ubuntu distribution with `sudo` access.
-- A **Huawei Cloud MaaS API key** for the `ap-southeast-1` (Singapore) region. The gateway cannot dispatch without it. If you don't have one, the bootstrap will hard-fail at the key prompt — this is by design.
-- Network access to: `pypi.org` (Python packages), `registry.npmjs.org` (npm packages), `github.com` (repo clone), and `api-ap-southeast-1.modelarts-maas.com` (MaaS endpoint, port 443). If you're behind a corporate proxy or firewall, verify all four are reachable.
+- A **Huawei Cloud MaaS API key** for the `ap-southeast-1` region. The gateway cannot dispatch without it. If you don't have one, the bootstrap will hard-fail at the key prompt — this is by design.
+- Network access to: `pypi.org` (Python packages), `registry.npmjs.org` (npm packages), `github.com` (repo clone), and `api-ap-southeast-1.modelarts-maas.com` (MaaS endpoint, port 443). **If you're behind a corporate proxy or firewall, verify all four are reachable.**
 
 ---
 
@@ -93,7 +93,7 @@ sudo apt update && sudo apt upgrade -y
 
 ## Step 2 — Check if systemd is enabled and activate it if not
 
-The gateway runs as a **systemd service**. WSL2 supports systemd but ships with it **disabled by default**. Without it, every `systemctl` command fails silently and the gateway cannot be managed.
+The gateway runs as a **systemd service**. Without it, every `systemctl` command fails silently and the gateway cannot be managed.
 
 **Check:**
 
@@ -126,8 +126,6 @@ Reopen your WSL terminal and verify:
 systemctl is-system-running    # must now say "running"
 ```
 
-> **Note:** This is the single most common WSL failure. Everything else in this guide (git, python, npm) works without systemd, so people assume it's on. It isn't. If you skip this, step 12 will fail with `System has not been booted with systemd`.
-
 ---
 
 ## Step 3 — Install the uv package manager
@@ -158,7 +156,7 @@ uv --version
 
 ## Step 4 — Install Python 3.12
 
-The AI-DLC installer **hard-codes** `python3.12` — no other version (3.11, 3.13) will work. Install it via `uv`:
+The AI-DLC installer **hard-codes** `python3.12` — no other version will work. Install it via `uv`:
 
 ```bash
 uv python install 3.12
@@ -171,12 +169,6 @@ python3.12 --version
 # Expected: Python 3.12.x
 ```
 
-> **Alternative if `uv python install` doesn't put `python3.12` on your PATH:** Use the deadsnakes PPA:
-> ```bash
-> sudo add-apt-repository -y ppa:deadsnakes/ppa
-> sudo apt update
-> sudo apt install -y python3.12 python3.12-venv python3.12-dev
-> ```
 > The installer calls `python3.12` by name, so it must be findable on the PATH regardless of how it was installed.
 
 ---
@@ -255,7 +247,7 @@ sudo apt install -y git
 
 ## Step 8 — Check whether port 19001 is being used and free it if needed
 
-The gateway listens on **port 19001** (hardcoded in the source as `os.getenv("GATEWAY_PORT", "19001")`). If another process holds this port, the gateway will fail to start with `Address already in use`.
+The gateway listens on **port 19001**. If another process holds this port, the gateway will fail to start with `Address already in use`.
 
 **Check:**
 
@@ -326,9 +318,7 @@ MODEL_NAME=glm-5.2
 MODEL_PROVIDER=OpenAI
 ```
 
-> **The MaaS API endpoint is:** `https://api-ap-southeast-1.modelarts-maas.com/openai/v1`
->
-> This is Huawei Cloud ModelArts MaaS in the **Singapore** (`ap-southeast-1`) region. Your API key **must be issued for this region**. If your key is for a different region (e.g., `cn-north-4`), you must change `API_BASE` accordingly. If you need to reconfigure the key or endpoint later, run `./install.sh --setup-maas-key`.
+> If you need to reconfigure the key or endpoint later, run `./install.sh --setup-maas-key`.
 
 **About `/opt/` permissions (sub-steps 4–7):**
 
@@ -416,43 +406,6 @@ MODEL_PROVIDER=OpenAI
 
 The `jiuwenswarm` package does **not** ship a `.service` file. You must create it manually. This step requires `sudo` because it writes to `/etc/systemd/system/`.
 
-> **Before running:** Replace `d50065704` with your actual username if it differs. Find it with `whoami` or `echo $USER`. The `User=`, `HOME=`, `ExecStart=`, and `WorkingDirectory=` lines must all reference your real home directory.
-
-```bash
-sudo tee /etc/systemd/system/jiuwenswarm-gateway.service > /dev/null << 'UNIT'
-[Unit]
-Description=JiuwenSwarm Gateway (AI-DLC plane runtime)
-After=network.target
-
-[Service]
-Type=simple
-User=d50065704
-Environment=GATEWAY_PORT=19001
-Environment=HOME=/home/d50065704
-ExecStart=/home/d50065704/.local/bin/jiuwenswarm-gateway
-Restart=on-failure
-RestartSec=5
-WorkingDirectory=/home/d50065704/.jiuwenswarm
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-```
-
-**What this unit does:**
-
-| Directive | Purpose |
-|-----------|---------|
-| `After=network.target` | Wait for networking before starting |
-| `Type=simple` | The gateway runs in the foreground |
-| `User=d50065704` | Run as your user, not root |
-| `Environment=GATEWAY_PORT=19001` | The port the gateway binds to |
-| `Environment=HOME=/home/d50065704` | So the gateway can find `~/.jiuwenswarm/` |
-| `ExecStart=...jiuwenswarm-gateway` | The gateway server binary |
-| `Restart=on-failure` | Auto-restart if it crashes |
-| `WorkingDirectory=~/.jiuwenswarm` | The runtime data root |
-
-> **To make this guide portable**, you can use a command that substitutes your username automatically:
 > ```bash
 > MY_USER=$(whoami)
 > MY_HOME=$(eval echo ~$MY_USER)
@@ -475,7 +428,19 @@ UNIT
 > WantedBy=multi-user.target
 > UNIT
 > ```
-> (Note: this version uses `UNIT` without quotes so variables expand — that's intentional here.)
+
+**What this unit does:**
+
+| Directive | Purpose |
+|-----------|---------|
+| `After=network.target` | Wait for networking before starting |
+| `Type=simple` | The gateway runs in the foreground |
+| `User=$MY_USER` | Run as your user, not root |
+| `Environment=GATEWAY_PORT=19001` | The port the gateway binds to |
+| `Environment=HOME=$MY_HOME` | So the gateway can find `~/.jiuwenswarm/` |
+| `ExecStart=...jiuwenswarm-gateway` | The gateway server binary |
+| `Restart=on-failure` | Auto-restart if it crashes |
+| `WorkingDirectory=~/.jiuwenswarm` | The runtime data root |
 
 ---
 
@@ -759,21 +724,24 @@ if ! grep -q 'API_KEY=' ~/.jiuwenswarm/config/.env 2>/dev/null; then
     cp ~/.jiuwenswarm/config/.env.bak ~/.jiuwenswarm/config/.env
 fi
 
-# 11. Create systemd service unit (replace d50065704 with your username)
-sudo tee /etc/systemd/system/jiuwenswarm-gateway.service > /dev/null << 'UNIT'
+# 11. Create systemd service unit
+
+MY_USER=$(whoami)
+MY_HOME=$(eval echo ~$MY_USER)
+sudo tee /etc/systemd/system/jiuwenswarm-gateway.service > /dev/null << UNIT
 [Unit]
 Description=JiuwenSwarm Gateway (AI-DLC plane runtime)
 After=network.target
 
 [Service]
 Type=simple
-User=d50065704
+User=$MY_USER
 Environment=GATEWAY_PORT=19001
-Environment=HOME=/home/d50065704
-ExecStart=/home/d50065704/.local/bin/jiuwenswarm-gateway
+Environment=HOME=$MY_HOME
+ExecStart=$MY_HOME/.local/bin/jiuwenswarm-gateway
 Restart=on-failure
 RestartSec=5
-WorkingDirectory=/home/d50065704/.jiuwenswarm
+WorkingDirectory=$MY_HOME/.jiuwenswarm
 
 [Install]
 WantedBy=multi-user.target
