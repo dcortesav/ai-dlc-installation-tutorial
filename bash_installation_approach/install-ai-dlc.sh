@@ -430,7 +430,7 @@ UNIT
   if command_exists openspec; then
     ok "openspec already installed"
   else
-    npm i -g "@fission-ai/openspec@${OPENSPEC_VERSION}" && ok "openspec installed" \
+    sudo npm i -g "@fission-ai/openspec@${OPENSPEC_VERSION}" && ok "openspec installed" \
       || warn "openspec install failed — spec validation won't work. Install manually: npm i -g @fission-ai/openspec@${OPENSPEC_VERSION}"
   fi
 
