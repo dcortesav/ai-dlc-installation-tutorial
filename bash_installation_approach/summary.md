@@ -1,8 +1,8 @@
-# Summary — `install-ai-dlc-tool` Automated Installer
+# Summary — `install-ai-dlc-tool.sh` Automated Installer
 
 ## What was done
 
-A bash script named **`install-ai-dlc-tool`** was created at the repository root. It automates the AI-DLC tool installation process described in `ai-dlc-tool-installation-guide-with-claude.md`, covering **steps 1 through 14** of the guide. **Step 0 (Claude Code installation and configuration) is intentionally excluded** — the script starts from step 1 as requested.
+A bash script named **`install-ai-dlc-tool.sh`** was created at the repository root. It automates the AI-DLC tool installation process described in `ai-dlc-tool-installation-guide-with-claude.md`, covering **steps 1 through 14** of the guide. **Step 0 (Claude Code installation and configuration) is intentionally excluded** — the script starts from step 1 as requested.
 
 The script was validated for correct bash syntax (`bash -n`) and confirmed to use clean LF line endings (no CRLF), so it will run correctly inside WSL2.
 
@@ -60,17 +60,17 @@ These interactions cannot be eliminated without compromising the install:
 
 ```bash
 # Fully interactive — prompts for sudo password and MaaS API key:
-./install-ai-dlc-tool
+./install-ai-dlc-tool.sh
 ```
 
 ### Providing the API key upfront (recommended — minimizes interaction)
 
 ```bash
 # Via flag:
-./install-ai-dlc-tool --api-key "your-huawei-maas-api-key"
+./install-ai-dlc-tool.sh --api-key "your-huawei-maas-api-key"
 
 # Or via environment variable:
-MAAS_API_KEY="your-huawei-maas-api-key" ./install-ai-dlc-tool
+MAAS_API_KEY="your-huawei-maas-api-key" ./install-ai-dlc-tool.sh
 ```
 
 ### All options
@@ -87,7 +87,7 @@ MAAS_API_KEY="your-huawei-maas-api-key" ./install-ai-dlc-tool
 ### Example: fully automated (except sudo password)
 
 ```bash
-./install-ai-dlc-tool --api-key "your-key" --yes
+./install-ai-dlc-tool.sh --api-key "your-key" --yes
 ```
 
 ### If systemd is not enabled
