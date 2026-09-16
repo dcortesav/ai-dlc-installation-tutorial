@@ -60,6 +60,7 @@ These interactions cannot be eliminated without compromising the install:
 
 ```bash
 # Fully interactive — prompts for sudo password and MaaS API key:
+chmod +x ~/install-ai-dlc-tool.sh
 ./install-ai-dlc-tool.sh
 ```
 
@@ -67,9 +68,11 @@ These interactions cannot be eliminated without compromising the install:
 
 ```bash
 # Via flag:
+chmod +x ~/install-ai-dlc-tool.sh
 ./install-ai-dlc-tool.sh --api-key "your-huawei-maas-api-key"
 
 # Or via environment variable:
+chmod +x ~/install-ai-dlc-tool.sh
 MAAS_API_KEY="your-huawei-maas-api-key" ./install-ai-dlc-tool.sh
 ```
 
@@ -87,6 +90,7 @@ MAAS_API_KEY="your-huawei-maas-api-key" ./install-ai-dlc-tool.sh
 ### Example: fully automated (except sudo password)
 
 ```bash
+chmod +x ~/install-ai-dlc-tool.sh
 ./install-ai-dlc-tool.sh --api-key "your-key" --yes
 ```
 
